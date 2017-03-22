@@ -1943,6 +1943,22 @@ int CNPC_Combine::SelectScheduleAttack()
 		if ( !GetEnemy()->MyNPCPointer()->FInViewCone( this ) && OccupyStrategySlot( SQUAD_SLOT_GRENADE1 ) )
 			return SCHED_COMBINE_CHARGE_TURRET;
 	}
+	
+	// If it's an Engineer's sentry gun, we treat it with a lot more caution. (when we have our thinking caps on)
+	if ( GetEnemy() && FClassnameIs(GetEnemy(), "obj_sentrygun") && g_pGameRules->GetSkillLevel() >= SKILL_MEDIUM )
+	{
+		// Don't do this until I've been fighting the sentry for a whole second
+		float flTimeAtFirstHand = GetEnemies()->TimeAtFirstHand(GetEnemy());
+		if ( flTimeAtFirstHand != AI_INVALID_TIME )
+		{
+			float flTimeEnemySeen = gpGlobals->curtime - flTimeAtFirstHand;
+			if ( flTimeEnemySeen > 1.0 )
+			{
+				if ( CanGrenadeEnemy() && OccupyStrategySlot( SQUAD_SLOT_GRENADE1 ) )
+					return SCHED_RANGE_ATTACK2;
+			}
+		}
+	}
 
 	// When fighting against the player who's wielding a mega-physcannon, 
 	// always close the distance if possible
