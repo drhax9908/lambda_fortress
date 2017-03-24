@@ -7615,7 +7615,7 @@ int CAI_BaseNPC::IRelationPriority(CBaseEntity *pTarget)
 		{
 			if (pTFPlayer->HasTheFlag())
 			{
-				// Adding 2 to the priority makes this NPC a higher priority than medics healing wounded.
+				// Adding 2 to the priority makes this player a higher priority than medics healing wounded.
 				priority += 2;
 			}
 		}
