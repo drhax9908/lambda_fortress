@@ -1676,6 +1676,11 @@ public:
 	virtual void		AddEntityRelationship( CBaseEntity *pEntity, Disposition_t nDisposition, int nPriority );
 	virtual void		AddClassRelationship( Class_T nClass, Disposition_t nDisposition, int nPriority );
 
+#ifdef TF_CLASSIC
+	Disposition_t		IRelationType(CBaseEntity *pTarget);
+	int					IRelationPriority( CBaseEntity *pTarget );
+#endif
+
 	void				NPCUse( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
 
 	CBaseGrenade*		IncomingGrenade(void);

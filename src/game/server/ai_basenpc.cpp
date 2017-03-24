@@ -165,6 +165,13 @@ ConVar	ai_use_think_optimizations( "ai_use_think_optimizations", "1" );
 
 ConVar	ai_test_moveprobe_ignoresmall( "ai_test_moveprobe_ignoresmall", "0" );
 
+#ifdef TF_CLASSIC
+ConVar lf_npc_uberfear( "lf_npc_uberfear", "0", FCVAR_REPLICATED, "Makes NPCs fear ubercharged/invulnerable enemies. If set to 2, zombies and antlions won't be affected." );
+ConVar lf_npc_prioritizemedics( "lf_npc_prioritizemedics", "0", FCVAR_REPLICATED, "Makes NPCs target medics who are healing enemies, or when they have an ubercharge ready. If set to 2, they will deprioritize targets being healed." );
+ConVar lf_npc_ubertactics( "lf_npc_ubertactics", "0", FCVAR_REPLICATED, "Makes NPCs more aggressive when they have uber." );
+ConVar lf_npc_intelpriority( "lf_npc_intelpriority", "0", FCVAR_REPLICATED, "Makes NPCs prioritize enemies stealing their intelligence." );
+#endif // TF_CLASSIC
+
 #ifdef HL2_EPISODIC
 extern ConVar ai_vehicle_avoidance;
 #endif // HL2_EPISODIC
@@ -7522,6 +7529,101 @@ void CAI_BaseNPC::AddRelationship( const char *pszRelationship, CBaseEntity *pAc
 		entityString		= strtok(NULL," ");
 	}
 }
+
+#ifdef TF_CLASSIC
+//-----------------------------------------------------------------------------
+// Input  : pTarget - Entity with which to determine relationship.
+// Output : Returns relationship value.
+//-----------------------------------------------------------------------------
+Disposition_t CAI_BaseNPC::IRelationType(CBaseEntity *pTarget)
+{
+	Disposition_t disp = BaseClass::IRelationType(pTarget);
+
+	if ( pTarget == NULL )
+		return disp;
+
+	// Our target is invulnerable, probably because of a medic's ubercharge.
+	// No matter if they're a player or a NPC, fear them.
+	// (if we can)
+	if ( lf_npc_uberfear.GetInt() != 0 && ( (pTarget->IsNPC() && pTarget->MyNPCPointer()->InCond( TF_COND_INVULNERABLE )) || ( ToTFPlayer( pTarget ) && ToTFPlayer( pTarget )->m_Shared.InCond( TF_COND_INVULNERABLE ) ) ) )
+	{
+		if ( disp >= D_LI )
+		{
+			// (this makes it apply to both D_LI and D_NU)
+			// It's okay, they're friends
+			return disp;
+		}
+
+		if (Classify() == (CLASS_ZOMBIE | CLASS_ANTLION) && lf_npc_uberfear.GetInt() >= 2)
+		{
+			// When uberfear is set to 2, zombies and antlions are unaffected by the curse of
+			// being afraid of ubercharged enemies.
+			return disp;
+		}
+
+		return D_FR;
+	}
+
+	return disp;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: describes the relationship between two types of NPC.
+// Input  :
+// Output :
+//-----------------------------------------------------------------------------
+int CAI_BaseNPC::IRelationPriority(CBaseEntity *pTarget)
+{
+	int priority = BaseClass::IRelationPriority( pTarget );
+	CTFPlayer *pTFPlayer = ToTFPlayer( pTarget );
+
+	// If enabled, do medic prioritization procedures
+	if (lf_npc_prioritizemedics.GetInt() >= 1)
+	{
+		if (pTarget && pTFPlayer)
+		{
+			if (CTFWeaponBase *pWpn = pTFPlayer->GetActiveTFWeapon())
+			{
+				CWeaponMedigun *pMedigun = dynamic_cast<CWeaponMedigun*>(pWpn);
+				if (pMedigun && (pMedigun->GetHealTarget() || pMedigun->GetChargeLevel() >= 1.0))
+				{
+					// Prioritize medics who are healing others or have an ubercharge ready.
+					priority += 1;
+				}
+				else if (lf_npc_prioritizemedics.GetInt() >= 2 && pTFPlayer->m_Shared.GetFirstHealer() && (pTFPlayer->GetHealth() > pTFPlayer->GetMaxHealth() * 0.5) && !pTFPlayer->HasTheFlag())
+				{
+					// If set to 2, deprioritize the player who is being healed.
+					// If the player being healed is below half HP, don't deprioritize yet.
+					// They might still be killable.
+					// Don't deprioritize if he has the flag, either.
+					priority -= 1;
+				}
+			}
+		}
+		else if (lf_npc_prioritizemedics.GetInt() >= 2 && pTarget && pTarget->IsNPC())
+		{
+			// Our target is a NPC, and medic prioritization is set to 2.
+			// If their health isn't low, deprioritize the NPC.
+			if (pTarget->MyNPCPointer()->GetFirstHealer() && (pTarget->GetHealth() > pTarget->GetMaxHealth() * 0.5))
+				priority -= 1;
+		}
+	}
+
+	if (lf_npc_intelpriority.GetBool() == 1)
+	{
+		if (pTarget && pTFPlayer)
+		{
+			if (pTFPlayer->HasTheFlag())
+			{
+				// Adding 2 to the priority makes this NPC a higher priority than medics healing wounded.
+				priority += 2;
+			}
+		}
+	}
+
+	return priority;
+}
+#endif
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------

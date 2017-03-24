@@ -29,6 +29,11 @@
 #include "weapon_physcannon.h"
 #include "SoundEmitterSystem/isoundemittersystembase.h"
 #include "npc_headcrab.h"
+#ifdef TF_CLASSIC
+#include "tf_obj.h"
+#include "tf_obj_sentrygun.h"
+#include "tf_player.h"
+#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -54,6 +59,12 @@ int g_fCombineQuestion;				// true if an idle grunt asked a question. Cleared wh
 #define COMBINE_SHOTGUN_STANDING_POSITION	Vector( 0, 0, 36 )
 #define COMBINE_SHOTGUN_CROUCHING_POSITION	Vector( 0, 0, 36 )
 #define COMBINE_MIN_CROUCH_DISTANCE		256.0
+
+#ifdef TF_CLASSIC
+ConVar lf_npc_combine_sentrybehavior( "lf_npc_combine_sentrybehavior", "0", FCVAR_REPLICATED, "Allows soldiers to employ special tactics against sentry guns." );
+extern ConVar lf_npc_ubertactics;
+extern ConVar lf_npc_intelpriority;
+#endif
 
 //-----------------------------------------------------------------------------
 // Static stuff local to this file.
@@ -585,7 +596,6 @@ Class_T	CNPC_Combine::Classify ( void )
 {
 	return CLASS_COMBINE;
 }
-
 
 //-----------------------------------------------------------------------------
 // Continuous movement tasks
@@ -1772,7 +1782,12 @@ int CNPC_Combine::SelectSchedule( void )
 				Assert( pSound != NULL );
 				if ( pSound)
 				{
+#ifndef TF_CLASSIC
 					if (pSound->m_iType & SOUND_DANGER)
+#else
+					// If we're ubered, it's fine.
+					if (pSound->m_iType & SOUND_DANGER && !InCond(TF_COND_INVULNERABLE))
+#endif
 					{
 						// I hear something dangerous, probably need to take cover.
 						// dangerous sound nearby!, call it out
@@ -1895,6 +1910,7 @@ int CNPC_Combine::SelectFailSchedule( int failedSchedule, int failedTask, AI_Tas
 	return BaseClass::SelectFailSchedule( failedSchedule, failedTask, taskFailCode );
 }
 
+#ifndef TF_CLASSIC
 //-----------------------------------------------------------------------------
 // Should we charge the player?
 //-----------------------------------------------------------------------------
@@ -1902,6 +1918,25 @@ bool CNPC_Combine::ShouldChargePlayer()
 {
 	return GetEnemy() && GetEnemy()->IsPlayer() && PlayerHasMegaPhysCannon() && !IsLimitingHintGroups();
 }
+#else
+//-----------------------------------------------------------------------------
+// Should we charge the player?
+//-----------------------------------------------------------------------------
+bool CNPC_Combine::ShouldChargePlayer()
+{
+	// Classic mega-physcannon check.
+	if (GetEnemy() && GetEnemy()->IsPlayer() && PlayerHasMegaPhysCannon() && !IsLimitingHintGroups())
+		return true;
+
+	// If we're invulnerable, and it's not wearing off, charge at will. (if we're allowed)
+	// If our navigation is limited to nodes in our hintgroup, don't charge.
+	// This check applies to both players and NPCs.
+	if (lf_npc_ubertactics.GetBool() == 1 && GetEnemy() && !IsLimitingHintGroups() && InCond(TF_COND_INVULNERABLE) && !InCond(TF_COND_INVULNERABLE_WEARINGOFF))
+		return true;
+
+	return false;
+}
+#endif
 
 
 //-----------------------------------------------------------------------------
@@ -1943,6 +1978,40 @@ int CNPC_Combine::SelectScheduleAttack()
 		if ( !GetEnemy()->MyNPCPointer()->FInViewCone( this ) && OccupyStrategySlot( SQUAD_SLOT_GRENADE1 ) )
 			return SCHED_COMBINE_CHARGE_TURRET;
 	}
+
+#if TF_CLASSIC
+	// I'm fighting an object. What am I doing with my brainwashed life?
+	if ( GetEnemy() && GetEnemy()->IsBaseObject() )
+	{
+		CBaseObject* pObject = assert_cast<CBaseObject *>(GetEnemy());
+
+		// Is it a sentry gun?
+		// And are we allowed to employ these unique measures?
+		if ( pObject->ObjectType() == OBJ_SENTRYGUN && lf_npc_combine_sentrybehavior.GetInt() != 0 )
+		{
+			CObjectSentrygun* pSentry = assert_cast<CObjectSentrygun *>(GetEnemy());
+
+			// Ported from AI designed to be used against hacked Combine turrets.
+			// Wait a few seconds after seeing the sentry for the first time. (if we're not already dead)
+			// Then, just become grenade happy.
+			float flTimeAtFirstHand = GetEnemies()->TimeAtFirstHand(GetEnemy());
+			if ( flTimeAtFirstHand != AI_INVALID_TIME )
+			{
+				float flTimeEnemySeen = gpGlobals->curtime - flTimeAtFirstHand;
+				if ( flTimeEnemySeen > 2.0 )
+				{
+					if ( CanGrenadeEnemy() && OccupyStrategySlot( SQUAD_SLOT_GRENADE1 ) )
+						return SCHED_RANGE_ATTACK2;
+				}
+			}
+
+			// If the sentry is being sapped, charge it!
+			// Just be sure to give other squadmembers a chance to throw a grenade before the soldier can run in.
+			if ( pSentry && pSentry->IsDisabled() && OccupyStrategySlot( SQUAD_SLOT_GRENADE1 ) )
+				return SCHED_COMBINE_CHARGE_TURRET;
+		}
+	}
+#endif
 
 	// When fighting against the player who's wielding a mega-physcannon, 
 	// always close the distance if possible
@@ -2878,6 +2947,12 @@ bool CNPC_Combine::CanAltFireEnemy( bool bUseFreeKnowledge )
 	if (gpGlobals->curtime < m_flNextGrenadeCheck )
 		return false;
 
+#ifdef TF_CLASSIC
+	// It won't work, they have uber.
+	if (GetEnemy()-> IsNPC() && GetEnemy()->MyNPCPointer()->InCond(TF_COND_INVULNERABLE))
+		return false;
+#endif
+
 	// See Steve Bond if you plan on changing this next piece of code!! (SJB) EP2_OUTLAND_10
 	if (m_iNumGrenades < 1)
 		return false;
@@ -3247,6 +3322,17 @@ const char* CNPC_Combine::GetSquadSlotDebugName( int iSquadSlot )
 //-----------------------------------------------------------------------------
 bool CNPC_Combine::IsUsingTacticalVariant( int variant )
 {
+	// I believe this is deprecated by ShouldChargePlayer.
+	/*
+#if TF_CLASSIC
+	if (lf_npc_ubertactics.GetBool() == 1 && InCond(TF_COND_INVULNERABLE) && !InCond(TF_COND_INVULNERABLE_WEARINGOFF))
+	{
+		// Lie about our tactical variant if we're invulnerable/ubercharged, if we can. Don't do so if it's wearing off.
+		return true;
+	}
+#endif
+	*/
+
 	if( variant == TACTICAL_VARIANT_PRESSURE_ENEMY && m_iTacticalVariant == TACTICAL_VARIANT_PRESSURE_ENEMY_UNTIL_CLOSE )
 	{
 		// Essentially, fib. Just say that we are a 'pressure enemy' soldier.

@@ -37,6 +37,10 @@ ConVar ai_use_readiness("ai_use_readiness", "1" ); // 0 = off, 1 = on, 2 = on fo
 ConVar ai_readiness_decay( "ai_readiness_decay", "120" );// How many seconds it takes to relax completely
 ConVar ai_new_aiming( "ai_new_aiming", "1" );
 
+#ifdef TF_CLASSIC
+extern ConVar lf_npc_ubertactics;
+#endif
+
 #define GetReadinessUse()	ai_use_readiness.GetInt()
 
 extern ConVar g_debug_transitions;
@@ -786,7 +790,12 @@ int CNPC_PlayerCompanion::SelectScheduleDanger()
 
 		ASSERT( pSound != NULL );
 
+#ifndef TF_CLASSIC
 		if ( pSound && (pSound->m_iType & SOUND_DANGER) )
+#else
+		// If we're ubered, it's fine.
+		if ( pSound && (pSound->m_iType & SOUND_DANGER) && !InCond(TF_COND_INVULNERABLE) )
+#endif
 		{
 			if ( !(pSound->SoundContext() & (SOUND_CONTEXT_MORTAR|SOUND_CONTEXT_FROM_SNIPER)) || IsOkToCombatSpeak() )
 				SpeakIfAllowed( TLK_DANGER );
@@ -1053,6 +1062,16 @@ int CNPC_PlayerCompanion::TranslateSchedule( int scheduleType )
 		if ( GetEnemy() && FClassnameIs( GetEnemy(), "npc_combinegunship" ) )
 			return SCHED_ESTABLISH_LINE_OF_FIRE;
 		break;
+
+#ifdef TF_CLASSIC
+	case SCHED_HIDE_AND_RELOAD:
+		// No running away when you're invulnerable.
+		if ( lf_npc_ubertactics.GetBool() == 1 && InCond(TF_COND_INVULNERABLE) )
+		{
+			return SCHED_RELOAD;
+		}
+		break;
+#endif
 
 	case SCHED_RANGE_ATTACK1:
 		if ( IsMortar( GetEnemy() ) )
