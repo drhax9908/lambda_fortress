@@ -364,6 +364,8 @@ public:
 	int GetNumSquadCommandables();
 	int GetNumSquadCommandableMedics();
 
+	virtual bool	PassesDamageFilter( const CTakeDamageInfo &info );
+
 	//Transition
 	void	SaveForTransition( void );
 	void	DeleteForTransition( void );
