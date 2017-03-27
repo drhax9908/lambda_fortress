@@ -7479,20 +7479,6 @@ void CTFPlayer::CommanderMode()
 }
 
 //-----------------------------------------------------------------------------
-// Ported from hl2_player.cpp, is there any reason not to include this?
-//-----------------------------------------------------------------------------
-bool CTFPlayer::PassesDamageFilter(const CTakeDamageInfo &info)
-{
-	CBaseEntity *pAttacker = info.GetAttacker();
-	if( pAttacker && pAttacker->MyNPCPointer() && pAttacker->MyNPCPointer()->IRelationType(this) == D_LI )
-	{
-		return false;
-	}
-
-	return BaseClass::PassesDamageFilter( info );
-}
-
-//-----------------------------------------------------------------------------
 // Purpose: Save Health, Ammo, Class and Current Weapon by SteamID
 //-----------------------------------------------------------------------------
 void CTFPlayer::SaveForTransition( void )
