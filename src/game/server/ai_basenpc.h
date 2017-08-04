@@ -1832,6 +1832,9 @@ public:
 	void InputForgetEntity( inputdata_t &inputdata );
 	void InputIgnoreDangerSounds( inputdata_t &inputdata );
 	void InputUpdateEnemyMemory( inputdata_t &inputdata );
+#ifdef TF_CLASSIC
+	void InputSetTeamNumber( inputdata_t &inputdata );
+#endif
 
 	//---------------------------------
 	
@@ -1888,6 +1891,11 @@ public:
 
 	bool					m_bDidDeathCleanup;
 
+#ifdef TF_CLASSIC
+	//virtual const char		*GetHudName();
+	//CNetworkVar(const char*, m_sClientHudName);
+	virtual void SetHudName(const char *pName);
+#endif
 
 	IMPLEMENT_NETWORK_VAR_FOR_DERIVED( m_lifeState );
 

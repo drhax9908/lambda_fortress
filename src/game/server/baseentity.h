@@ -931,6 +931,11 @@ public:
 	virtual bool	ShouldAttractAutoAim( CBaseEntity *pAimingEnt ) { return ((GetFlags() & FL_AIMTARGET) != 0); }
 	virtual float	GetAutoAimRadius();
 	virtual Vector	GetAutoAimCenter() { return WorldSpaceCenter(); }
+	
+	string_t m_sHudName;
+	virtual const char		*GetHudName();
+	virtual void			SetHudName(const char *pName);
+	void InputSetHudName( inputdata_t &inputdata );
 
 	virtual ITraceFilter*	GetBeamTraceFilter( void );
 

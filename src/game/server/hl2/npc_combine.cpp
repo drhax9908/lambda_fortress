@@ -314,6 +314,12 @@ void CNPC_Combine::Activate()
 //-----------------------------------------------------------------------------
 void CNPC_Combine::Spawn( void )
 {
+	// We must do this again after we spawn because GetHudName() is normally called in PostConstructor,
+	// which is called before we could assign a model. npc_combine uses custom HUD names based on the model,
+	// so we have to do this after the model has been chosen.
+	// (Blixibon)
+	Q_strncpy( m_szClassname.GetForModify(), GetHudName(), 128 );
+
 	SetHullType(HULL_HUMAN);
 	SetHullSizeNormal();
 
@@ -595,6 +601,28 @@ bool CNPC_Combine::OverrideMoveFacing( const AILocalMoveGoal_t &move, float flIn
 Class_T	CNPC_Combine::Classify ( void )
 {
 	return CLASS_COMBINE;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Allows us to use "Combine Elite" on our tags and such.
+// This wasn't entirely necessary, but it wouldn't hurt either.
+// (Blixibon)
+//-----------------------------------------------------------------------------
+const char*	CNPC_Combine::GetHudName()
+{
+	if (m_sHudName == NULL_STRING)
+	{
+		const char *pModelName = STRING( GetModelName() );
+
+		if (!stricmp(pModelName, "models/combine_super_soldier.mdl"))
+			return "npc_combine_elite";
+
+		if (!stricmp(pModelName, "models/combine_soldier_prisonguard.mdl"))
+			return "npc_combine_prison";
+	}
+
+	return BaseClass::GetHudName();
 }
 
 

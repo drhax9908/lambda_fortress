@@ -1775,6 +1775,11 @@ BEGIN_DATADESC_NO_BASE( CBaseEntity )
 	DEFINE_KEYFIELD( m_nRenderFX, FIELD_CHARACTER, "renderfx" ),
 	DEFINE_KEYFIELD( m_nRenderMode, FIELD_CHARACTER, "rendermode" ),
 
+#ifdef TF_CLASSIC
+	DEFINE_KEYFIELD( m_sHudName, FIELD_STRING, "hudname" ),
+	DEFINE_INPUTFUNC( FIELD_STRING, "SetHudName", InputSetHudName ),
+#endif
+
 	// Consider moving to CBaseAnimating?
 	DEFINE_FIELD( m_flPrevAnimTime, FIELD_TIME ),
 	DEFINE_FIELD( m_flAnimTime, FIELD_TIME ),
@@ -2937,6 +2942,50 @@ float CBaseEntity::GetAutoAimRadius()
 	else
 		return 24.0f;
 }
+
+
+// (Blixibon)
+
+//-----------------------------------------------------------------------------
+// 
+//-----------------------------------------------------------------------------
+const char *CBaseEntity::GetHudName()
+{
+#ifdef TF_CLASSIC
+	if (m_sHudName != NULL_STRING)
+	{
+		return STRING(m_sHudName);
+	}
+	else
+#endif // TF_CLASSIC
+	{
+		return GetClassname();
+	}
+}
+
+//-----------------------------------------------------------------------------
+// 
+//-----------------------------------------------------------------------------
+void CBaseEntity::SetHudName( const char *pName = NULL )
+{
+#ifdef TF_CLASSIC
+	if (!Q_stricmp(pName, "0"))
+	{
+		m_sHudName = NULL_STRING;
+		return;
+	}
+
+	m_sHudName = MAKE_STRING(pName);
+#endif
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+void CBaseEntity::InputSetHudName( inputdata_t &inputdata )
+{
+	SetHudName(inputdata.value.String());
+}
+
 
 //-----------------------------------------------------------------------------
 // Changes the shadow cast distance over time

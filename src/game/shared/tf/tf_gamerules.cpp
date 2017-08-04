@@ -3576,11 +3576,11 @@ void CTFGameRules::DeathNotice( CBasePlayer *pVictim, const CTakeDamageInfo &inf
 		event->SetInt( "victim_index", pVictim->entindex() );
 		event->SetInt( "attacker", killer_ID );
 		event->SetInt( "attacker_index", killer_index );
-		event->SetString( "attacker_name", pKiller ? pKiller->GetClassname() : NULL );
+		event->SetString( "attacker_name", pKiller ? pKiller->GetHudName() : NULL );
 		event->SetInt( "attacker_team", pKiller ? pKiller->GetTeamNumber() : 0 );
 		event->SetInt( "assister", pTFAssister ? pTFAssister->GetUserID() : -1 );
 		event->SetInt( "assister_index", pAssister ? pAssister->entindex() : -1 );
-		event->SetString( "assister_name", pAssister ? pAssister->GetClassname() : NULL );
+		event->SetString( "assister_name", pAssister ? pAssister->GetHudName() : NULL );
 		event->SetInt( "assister_team", pAssister ? pAssister->GetTeamNumber() : 0 );
 		event->SetString( "weapon", killer_weapon_name );
 		event->SetInt( "damagebits", info.GetDamageType() );

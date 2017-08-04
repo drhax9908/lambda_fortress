@@ -2503,6 +2503,15 @@ Vector CNPC_PlayerCompanion::GetActualShootPosition( const Vector &shootOrigin )
 //------------------------------------------------------------------------------
 WeaponProficiency_t CNPC_PlayerCompanion::CalcWeaponProficiency( CBaseCombatWeapon *pWeapon )
 {
+#ifdef TF_CLASSIC
+	// Players on Blu may fight HL2 allies in non-coop gametypes, so nonvital companions have reduced accuracy.
+	// (Blixibon)
+	if (g_pGameRules->GetGameType() != TF_GAMETYPE_COOP && Classify() != CLASS_PLAYER_ALLY_VITAL)
+	{
+		return WEAPON_PROFICIENCY_VERY_GOOD;
+	}
+#endif
+
 	if( FClassnameIs( pWeapon, "weapon_ar2" ) )
 	{
 		return WEAPON_PROFICIENCY_VERY_GOOD;

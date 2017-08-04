@@ -166,10 +166,12 @@ ConVar	ai_use_think_optimizations( "ai_use_think_optimizations", "1" );
 ConVar	ai_test_moveprobe_ignoresmall( "ai_test_moveprobe_ignoresmall", "0" );
 
 #ifdef TF_CLASSIC
-ConVar lf_npc_uberfear( "lf_npc_uberfear", "0", FCVAR_REPLICATED, "Makes NPCs fear ubercharged/invulnerable enemies. If set to 2, zombies and antlions won't be affected." );
-ConVar lf_npc_prioritizemedics( "lf_npc_prioritizemedics", "0", FCVAR_REPLICATED, "Makes NPCs target medics who are healing enemies, or when they have an ubercharge ready. If set to 2, they will deprioritize targets being healed." );
-ConVar lf_npc_ubertactics( "lf_npc_ubertactics", "0", FCVAR_REPLICATED, "Makes NPCs more aggressive when they have uber." );
-ConVar lf_npc_intelpriority( "lf_npc_intelpriority", "0", FCVAR_REPLICATED, "Makes NPCs prioritize enemies stealing their intelligence." );
+// All of this had a default of 1 now.
+// (Blixibon)
+ConVar lf_npc_uberfear( "lf_npc_uberfear", "1", FCVAR_REPLICATED, "Makes NPCs fear ubercharged/invulnerable enemies. If set to 2, zombies and antlions won't be affected." );
+ConVar lf_npc_prioritizemedics( "lf_npc_prioritizemedics", "1", FCVAR_REPLICATED, "Makes NPCs target medics who are healing enemies, or when they have an ubercharge ready. If set to 2, they will deprioritize targets being healed." );
+ConVar lf_npc_ubertactics( "lf_npc_ubertactics", "1", FCVAR_REPLICATED, "Makes NPCs more aggressive when they have uber." );
+ConVar lf_npc_intelpriority( "lf_npc_intelpriority", "1", FCVAR_REPLICATED, "Makes NPCs prioritize enemies stealing their intelligence." );
 #endif // TF_CLASSIC
 
 #ifdef HL2_EPISODIC
@@ -770,6 +772,14 @@ bool CAI_BaseNPC::PassesDamageFilter( const CTakeDamageInfo &info )
 {
 	if ( ai_block_damage.GetBool() )
 		return false;
+
+#ifdef TF_CLASSIC
+	// Workaround for players on Blu being able to attack soldiers and such.
+	// (Blixibon)
+	if ( info.GetAttacker()->GetTeamNumber() == GetTeamNumber() && !ClassMatches("npc_antlion") )
+		return false;
+#endif
+
 	// FIXME: hook a friendly damage filter to the npc instead?
 	if ( (CapabilitiesGet() & bits_CAP_FRIENDLY_DMG_IMMUNE) && info.GetAttacker() && info.GetAttacker() != this )
 	{
@@ -784,7 +794,11 @@ bool CAI_BaseNPC::PassesDamageFilter( const CTakeDamageInfo &info )
 			}
 		}
 
+//#ifdef TF_CLASSIC
+//		if ( bHitByVehicle || (npcEnemy && (npcEnemy->IRelationType( this ) == D_LI || npcEnemy->GetTeamNumber() == GetTeamNumber())) )
+//#else
 		if ( bHitByVehicle || (npcEnemy && npcEnemy->IRelationType( this ) == D_LI) )
+//#endif
 		{
 			m_fNoDamageDecal = true;
 
@@ -2219,6 +2233,18 @@ bool CAI_BaseNPC::QueryHearSound( CSound *pSound )
 		if ( pSound->m_hOwner && pSound->m_hOwner->ClassMatches( m_iClassname ) )
 				return false;
 	}
+
+#ifdef TF_CLASSIC
+	if (pSound->IsSoundType(SOUND_DANGER))
+	{
+		// Stops allies from fearing friendly grenades, etc.
+		// Of course, this wouldn't work in a real battlefield.
+		// (Blixibon)
+		CBaseEntity *pOwner = pSound->m_hOwner.Get();
+		if (pOwner && pOwner->GetTeamNumber() == GetTeamNumber())
+			return false;
+	}
+#endif
 
 	if( ShouldIgnoreSound( pSound ) )
 		return false;
@@ -7086,6 +7112,15 @@ void CAI_BaseNPC::NPCInit ( void )
 	}
 #endif
 
+#ifdef TF_CLASSIC
+	// This is here instead of in PostConstructor because keyvalues and such need to be handled before this.
+	// (Blixibon)
+	if (m_sHudName != NULL_STRING)
+	{
+		Q_strncpy( m_szClassname.GetForModify(), GetHudName(), 128 );
+	}
+#endif
+
 	// Set fields common to all npcs
 	AddFlag( FL_AIMTARGET | FL_NPC );
 	AddSolidFlags( FSOLID_NOT_STANDABLE );
@@ -7211,6 +7246,8 @@ void CAI_BaseNPC::NPCInit ( void )
 	SetDeathPoseFrame( 0 );
 
 	m_EnemiesSerialNumber = -1;
+
+	//m_sClientHudName = GetHudName();
 }
 
 //-----------------------------------------------------------------------------
@@ -7578,6 +7615,7 @@ int CAI_BaseNPC::IRelationPriority(CBaseEntity *pTarget)
 	CTFPlayer *pTFPlayer = ToTFPlayer( pTarget );
 
 	// If enabled, do medic prioritization procedures
+	// (Blixibon)
 	if (lf_npc_prioritizemedics.GetInt() >= 1)
 	{
 		if (pTarget && pTFPlayer)
@@ -7644,6 +7682,33 @@ void CAI_BaseNPC::AddClassRelationship( Class_T nClass, Disposition_t nDispositi
 #endif
 	BaseClass::AddClassRelationship( nClass, nDisposition, nPriority );
 }
+
+#ifdef TF_CLASSIC
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+/*
+const char* CAI_BaseNPC::GetHudName()
+{
+	const char* sBase = BaseClass::GetHudName();
+
+	m_sClientHudName = sBase;
+
+	return sBase;
+}
+*/
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+void CAI_BaseNPC::SetHudName( const char *pName )
+{
+	BaseClass::SetHudName(pName);
+
+	Q_strncpy( m_szClassname.GetForModify(), GetHudName(), 128 );
+	
+	return BaseClass::SetHudName(pName);
+}
+#endif
+
 
 //=========================================================
 // NPCInitThink - Calls StartNPC. Startnpc is
@@ -10822,6 +10887,7 @@ CBaseEntity *CAI_BaseNPC::DropItem ( const char *pszItemName, Vector vecPos, QAn
 
 }
 
+//-----------------------------------------------------------------------------
 bool CAI_BaseNPC::ShouldFadeOnDeath( void )
 {
 	if ( g_RagdollLVManager.IsLowViolence() )
@@ -11188,6 +11254,9 @@ BEGIN_DATADESC( CAI_BaseNPC )
 	DEFINE_INPUTFUNC( FIELD_VOID,	"UnholsterWeapon", InputUnholsterWeapon ),
 	DEFINE_INPUTFUNC( FIELD_STRING,	"ForceInteractionWithNPC", InputForceInteractionWithNPC ),
 	DEFINE_INPUTFUNC( FIELD_STRING, "UpdateEnemyMemory", InputUpdateEnemyMemory ),
+#ifdef TF_CLASSIC
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetTeamNumber", InputSetTeamNumber ),
+#endif
 
 	// Function pointers
 	DEFINE_USEFUNC( NPCUse ),
@@ -11230,7 +11299,8 @@ IMPLEMENT_SERVERCLASS_ST( CAI_BaseNPC, DT_AI_BaseNPC )
 	SendPropInt( SENDINFO( m_nPlayerCond ), TF_COND_LAST, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_nNumHealers ), 5, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropBool( SENDINFO( m_bBurningDeath ) ),
-	SendPropInt( SENDINFO( m_nTFFlags ) )
+	SendPropInt( SENDINFO( m_nTFFlags ) ),
+	//SendPropString( SENDINFO( m_sClientHudName ) ),
 #endif
 END_SEND_TABLE()
 
@@ -11278,7 +11348,13 @@ void CAI_BaseNPC::PostConstructor( const char *szClassname )
 	BaseClass::PostConstructor( szClassname );
 	// Ugly hack to get NPC classname on client side. Unfortunately, I don't see any other way,
 	// other than adding a stub client class for every HL2 NPC. (Nicknine)
-	Q_strncpy( m_szClassname.GetForModify(), szClassname, 128 );
+	//Q_strncpy( m_szClassname.GetForModify(), szClassname, 128 );
+	
+	// Assuming m_szClassname is only used for stuff like target IDs, this ugly hack
+	// has been modified to use GetHudName() instead of the actual classname.
+	// This is called again later after the keyvalues have been handled.
+	// (Blixibon)
+	Q_strncpy( m_szClassname.GetForModify(), GetHudName(), 128 );
 	CreateComponents();
 
 #ifdef TF_CLASSIC
@@ -11678,6 +11754,23 @@ void CAI_BaseNPC::RestoreConditions( IRestore &restore, CAI_ScheduleBits *pCondi
 //-----------------------------------------------------------------------------
 bool CAI_BaseNPC::KeyValue( const char *szKeyName, const char *szValue )
 {
+#ifdef TF_CLASSIC
+	if ( FStrEq( szKeyName, "teamoverride" ) )
+	{
+		// Mapmakers can override NPCs' default team numbers with this keyvalue.
+		// The fact it doesn't even check to see if it's a valid team shows just how "override" it is.
+		// (Blixibon)
+		ChangeTeam(atoi(szValue));
+	}
+
+	if ( FStrEq( szKeyName, "hudname" ) /*&& UTIL_GetLocalPlayer()*/ )
+	{
+		// Although this is already a keyfield, MapEdit may need to modify this mid-game.
+		// (Blixibon)
+		SetHudName(szValue);
+	}
+#endif
+
 	bool bResult = BaseClass::KeyValue( szKeyName, szValue );
 
 	if( !bResult )
@@ -12151,6 +12244,19 @@ void CAI_BaseNPC::InputInsideTransition( inputdata_t &inputdata )
 		RemoveActorFromScriptedScenes( this, false );
 	}
 }
+
+#ifdef TF_CLASSIC
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+void CAI_BaseNPC::InputSetTeamNumber( inputdata_t &inputdata )
+{
+	int iValue = inputdata.value.Int();
+	if (iValue && iValue < 6) // Using 6 instead of TF_TEAM_COUNT allows us to assign Green and Yellow teams.
+	{
+		ChangeTeam(iValue);
+	}
+}
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -14694,6 +14800,9 @@ void CAI_BaseNPC::DeathNotice( const CTakeDamageInfo &info )
 
 	if ( pScorer )	// Is the killer a client?
 	{
+		// NPC frags are added here. There may or may not be a better place for this.
+		// (Blixibon)
+		pScorer->IncrementNPCFragCount( 1 );
 		killer_index = pScorer->entindex();
 	}
 	else if ( pKiller && pKiller->IsNPC() )
@@ -14706,13 +14815,13 @@ void CAI_BaseNPC::DeathNotice( const CTakeDamageInfo &info )
 	if ( event )
 	{
 		event->SetInt( "victim_index", pVictim->entindex() );
-		event->SetString( "victim_name", pVictim->GetClassname() );
+		event->SetString( "victim_name", pVictim->GetHudName() ); // event->SetString( "victim_name", pVictim->GetClassname() );
 		event->SetInt( "victim_team", pVictim->GetTeamNumber() );
 		event->SetInt( "attacker_index", killer_index );
-		event->SetString( "attacker_name", pKiller ? pKiller->GetClassname() : NULL );
+		event->SetString( "attacker_name", pKiller ? pKiller->GetHudName() : NULL ); // event->SetString( "attacker_name", pKiller ? pKiller->GetClassname() : NULL );
 		event->SetInt( "attacker_team", pKiller ? pKiller->GetTeamNumber() : 0 );
 		event->SetInt( "assister_index", pAssister ? pAssister->entindex() : -1 );
-		event->SetString( "assister_name", pAssister ? pAssister->GetClassname() : NULL );
+		event->SetString( "assister_name", pAssister ? pAssister->GetHudName() : NULL ); // event->SetString( "assister_name", pAssister ? pAssister->GetClassname() : NULL );
 		event->SetInt( "assister_team", pAssister ? pAssister->GetTeamNumber() : 0 );
 		event->SetString( "weapon", killer_weapon_name );
 		event->SetInt( "damagebits", info.GetDamageType() );

@@ -6527,6 +6527,24 @@ bool CTFPlayer::SpeakConceptIfAllowed( int iConcept, const char *modifiers, char
 				}
 				break;
 			}
+		case MP_CONCEPT_PLAYER_CHEERS:
+		case MP_CONCEPT_PLAYER_JEERS:
+		case MP_CONCEPT_PLAYER_POSITIVE:
+		case MP_CONCEPT_PLAYER_NEGATIVE:
+			{
+				// Now you can talk to citizens with voice commands.
+				// It's more like citizens interrupting these weird, cartoonish people who scream all the time, but it's still neat.
+				// (Blixibon)
+				if ( random->RandomInt( 1, 4 ) < 4 && (GetTeamNumber() == TF_TEAM_RED || m_Shared.GetDisguiseTeam() == TF_TEAM_RED) )
+				{
+					CBaseEntity *pRespondant = gEntList.FindEntityByClassnameWithin(NULL, "npc_citizen", GetLocalOrigin(), 256.0f);
+					if ( pRespondant )
+					{
+						g_EventQueue.AddEvent( pRespondant, "SpeakIdleResponse", ( GetExpresser()->GetTimeSpeechComplete() - gpGlobals->curtime ) + .2, this, this );
+					}
+				}
+				break;
+			}
 		}
 	}
 
@@ -7476,6 +7494,21 @@ void CTFPlayer::CommanderMode()
 	{
 		m_QueuedCommand = (player_squad_transient_commands.GetBool()) ? CC_SEND : CC_TOGGLE;
 	}
+}
+
+//-----------------------------------------------------------------------------
+// Ported from hl2_player.cpp. Stops friendly fire caused by NPCs.
+// (Blixibon)
+//-----------------------------------------------------------------------------
+bool CTFPlayer::PassesDamageFilter(const CTakeDamageInfo &info)
+{
+	CBaseEntity *pAttacker = info.GetAttacker();
+	if( pAttacker && pAttacker->MyNPCPointer() && pAttacker->MyNPCPointer()->IRelationType(this) == D_LI )
+	{
+		return false;
+	}
+
+	return BaseClass::PassesDamageFilter( info );
 }
 
 //-----------------------------------------------------------------------------
