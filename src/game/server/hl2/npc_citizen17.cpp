@@ -53,10 +53,10 @@ extern ConVar sk_healthvial;
 
 const int MAX_PLAYER_SQUAD = 4;
 
-ConVar	sk_citizen_health				( "sk_citizen_health",					"40");
-ConVar	sk_citizen_heal_player			( "sk_citizen_heal_player",				"25");
+ConVar	sk_citizen_health				( "sk_citizen_health",					"80");
+ConVar	sk_citizen_heal_player			( "sk_citizen_heal_player",				"50");
 ConVar	sk_citizen_heal_player_delay	( "sk_citizen_heal_player_delay",		"25");
-ConVar	sk_citizen_giveammo_player_delay( "sk_citizen_giveammo_player_delay",	"10");
+ConVar	sk_citizen_giveammo_player_delay( "sk_citizen_giveammo_player_delay",	"5");
 ConVar	sk_citizen_heal_player_min_pct	( "sk_citizen_heal_player_min_pct",		"0.60");
 ConVar	sk_citizen_heal_player_min_forced( "sk_citizen_heal_player_min_forced",		"10.0");
 ConVar	sk_citizen_heal_ally			( "sk_citizen_heal_ally",				"30");
