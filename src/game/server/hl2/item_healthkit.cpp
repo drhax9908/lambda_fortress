@@ -19,9 +19,9 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-ConVar	sk_healthkit( "sk_healthkit","25" );		
-ConVar	sk_healthvial( "sk_healthvial","10" );		
-ConVar	sk_healthcharger( "sk_healthcharger","50" );		
+ConVar	sk_healthkit( "sk_healthkit","100" );		
+ConVar	sk_healthvial( "sk_healthvial","50" );		
+ConVar	sk_healthcharger( "sk_healthcharger","1000" );		
 
 //-----------------------------------------------------------------------------
 // Small health kit. Heals the player when picked up.
