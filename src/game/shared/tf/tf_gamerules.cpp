@@ -411,7 +411,7 @@ ConVar	sk_max_gauss_round		( "sk_max_gauss_round", "30", FCVAR_REPLICATED );
 
 // Gunship & Dropship cannons
 ConVar	sk_npc_dmg_gunship			( "sk_npc_dmg_gunship", "40", FCVAR_REPLICATED );
-ConVar	sk_npc_dmg_gunship_to_plr	( "sk_npc_dmg_gunship_to_plr", "3", FCVAR_REPLICATED );
+ConVar	sk_npc_dmg_gunship_to_plr	( "sk_npc_dmg_gunship_to_plr", "1", FCVAR_REPLICATED );
 
 
 // (We clamp ammo ourselves elsewhere).
