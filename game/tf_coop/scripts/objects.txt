@@ -8,7 +8,7 @@ objects
 		StatusName			"#TF_Object_Sentry"
 		BuildTime			10
 		MaxObjects			1
-		Cost				130
+		Cost				40
 		CostMultiplier		1
 		UpgradeCost			0
 		MaxUpgradeLevel		0
@@ -35,7 +35,7 @@ objects
 		StatusName			"#TF_Object_Dispenser"
 		BuildTime			20
 		MaxObjects			1
-		Cost				100
+		Cost				40
 		CostMultiplier		1
 		UpgradeCost			0
 		MaxUpgradeLevel		0
@@ -62,7 +62,7 @@ objects
 		StatusName			"#TF_Object_Tele_Entrance"
 		BuildTime			20
 		MaxObjects			1
-		Cost				50
+		Cost				25
 		CostMultiplier		1
 		UpgradeCost			0
 		MaxUpgradeLevel		0
@@ -90,7 +90,7 @@ objects
 		StatusName			"#TF_Object_Tele_Exit"
 		BuildTime			20
 		MaxObjects			1
-		Cost				50
+		Cost				25
 		CostMultiplier		1
 		UpgradeCost			0
 		MaxUpgradeLevel		0
