@@ -14802,7 +14802,8 @@ void CAI_BaseNPC::DeathNotice( const CTakeDamageInfo &info )
 	{
 		// NPC frags are added here. There may or may not be a better place for this.
 		// (Blixibon)
-		pScorer->IncrementNPCFragCount( 1 );
+		// code disabled -DrHax9908
+		//pScorer->IncrementNPCFragCount( 1 );
 		killer_index = pScorer->entindex();
 	}
 	else if ( pKiller && pKiller->IsNPC() )
