@@ -32,11 +32,11 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-ConVar	sk_combine_s_health( "sk_combine_s_health","50");
-ConVar	sk_combine_s_kick( "sk_combine_s_kick","10");
+ConVar	sk_combine_s_health( "sk_combine_s_health","20");
+ConVar	sk_combine_s_kick( "sk_combine_s_kick","5");
 
-ConVar sk_combine_guard_health( "sk_combine_guard_health", "70");
-ConVar sk_combine_guard_kick( "sk_combine_guard_kick", "15");
+ConVar sk_combine_guard_health( "sk_combine_guard_health", "30");
+ConVar sk_combine_guard_kick( "sk_combine_guard_kick", "10");
  
 // Whether or not the combine guard should spawn health on death
 ConVar combine_guard_spawn_health( "combine_guard_spawn_health", "1" );
