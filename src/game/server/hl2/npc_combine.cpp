@@ -318,7 +318,8 @@ void CNPC_Combine::Spawn( void )
 	// which is called before we could assign a model. npc_combine uses custom HUD names based on the model,
 	// so we have to do this after the model has been chosen.
 	// (Blixibon)
-	Q_strncpy( m_szClassname.GetForModify(), GetHudName(), 128 );
+	// Broken Code Disabled -DrHax9908
+	//Q_strncpy( m_szClassname.GetForModify(), GetHudName(), 128 );
 
 	SetHullType(HULL_HUMAN);
 	SetHullSizeNormal();
@@ -609,6 +610,8 @@ Class_T	CNPC_Combine::Classify ( void )
 // This wasn't entirely necessary, but it wouldn't hurt either.
 // (Blixibon)
 //-----------------------------------------------------------------------------
+// Get this shit broken code outa here! -DrHax9908
+/*
 const char*	CNPC_Combine::GetHudName()
 {
 	if (m_sHudName == NULL_STRING)
@@ -624,6 +627,7 @@ const char*	CNPC_Combine::GetHudName()
 
 	return BaseClass::GetHudName();
 }
+*/
 
 
 //-----------------------------------------------------------------------------
