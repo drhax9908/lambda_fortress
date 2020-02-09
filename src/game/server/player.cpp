@@ -5995,7 +5995,7 @@ void CBasePlayer::ImpulseCommands( )
 	m_nImpulse = 0;
 }
 
-#ifdef HL2_EPISODIC
+//#ifdef HL2_EPISODIC
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -6015,7 +6015,7 @@ static void CreateJalopy( CBasePlayer *pPlayer )
 		pJeep->KeyValue( "model", "models/vehicle.mdl" );
 		pJeep->KeyValue( "solid", "6" );
 		pJeep->KeyValue( "targetname", "jeep" );
-		pJeep->KeyValue( "vehiclescript", "scripts/vehicles/jalopy.txt" );
+		pJeep->KeyValue( "vehiclescript", "scripts/vehicles/jeep_test.txt" );
 		DispatchSpawn( pJeep );
 		pJeep->Activate();
 		pJeep->Teleport( &vecOrigin, &vecAngles, NULL );
@@ -6031,8 +6031,7 @@ void CC_CH_CreateJalopy( void )
 }
 
 static ConCommand ch_createjalopy("ch_createjalopy", CC_CH_CreateJalopy, "Spawn jalopy in front of the player.", FCVAR_CHEAT);
-
-#endif // HL2_EPISODIC
+//#endif // HL2_EPISODIC
 
 //-----------------------------------------------------------------------------
 // Purpose: 

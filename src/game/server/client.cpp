@@ -98,7 +98,7 @@ void sv_allow_point_servercommand_changed( IConVar *pConVar, const char *pOldStr
 ConVar sv_allow_point_servercommand ( "sv_allow_point_servercommand",
 #ifdef TF_DLL
                                       // The default value here should match the default of the convar
-                                      "official",
+                                      "always",
 #else
                                       // Other games may use this in their official maps, and only TF exposes IsValveMap() currently
                                       "always",
