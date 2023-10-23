@@ -1,6 +1,6 @@
 "GameInfo"
 {
-	game	"AoDRP Lambda Fortress"
+	game	"Unofficial Lambda Fortress"
 	gamelogo 1
 	type 	multiplayer_only
 	icon	"resource/game"
